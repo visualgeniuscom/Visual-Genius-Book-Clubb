@@ -845,15 +845,15 @@ function RegisterFlow() {
   );
 }
 
-function LoginFlow({ onGoToCatalogue, onLoginSuccess, onLogout }) {
+function LoginFlow({ onGoToCatalogue, onLoginSuccess, onLogout, restoredProfile }) {
   const [view, setView] = useState('form');
 
   const [identifier, setIdentifier] = useState('');
-  const [phase, setPhase] = useState('identify');
+  const [phase, setPhase] = useState(restoredProfile ? 'success' : 'identify');
   const [foundId, setFoundId] = useState(null);
   const [foundName, setFoundName] = useState('');
   const [securityQuestion, setSecurityQuestion] = useState('');
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState(restoredProfile || null);
   const [answer, setAnswer] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1649,7 +1649,7 @@ function BookCard({ book, memberToken, onNeedLogin, onEdit }) {
   );
 }
 
-function BrowseView({ books, loading, memberToken, onNeedLogin, onEdit }) {
+function BrowseView({ books, loading, loadError, memberToken, onNeedLogin, onEdit }) {
   const [search, setSearch] = useState('');
   const [formatFilter, setFormatFilter] = useState('');
   const [bandFilter, setBandFilter] = useState('');
@@ -1664,6 +1664,15 @@ function BrowseView({ books, loading, memberToken, onNeedLogin, onEdit }) {
   });
 
   if (loading) return <p className="text-sm text-stone-400">Loading catalogue…</p>;
+
+  if (loadError) {
+    return (
+      <div className="bg-white border border-rose-200 rounded-lg p-8 text-center">
+        <p className="text-sm text-rose-600 mb-1">Couldn't load the catalogue.</p>
+        <p className="text-xs text-stone-400">{loadError}</p>
+      </div>
+    );
+  }
 
   if (books.length === 0) {
     return (
@@ -1761,6 +1770,7 @@ function CatalogueFlow({ memberToken, memberProfile, onNeedLogin, initialScreen 
   const [screen, setScreen] = useState(initialScreen || 'browse');
   const [books, setBooks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [adminPassword, setAdminPassword] = useState('');
   const [seeding, setSeeding] = useState(false);
@@ -1778,12 +1788,15 @@ function CatalogueFlow({ memberToken, memberProfile, onNeedLogin, initialScreen 
 
   async function loadBooks() {
     setLoading(true);
+    setLoadError('');
     try {
       const { data, error } = await supabase.from('books').select('*').order('title');
       if (error) throw error;
       setBooks((data || []).map(fromDbBook));
-    } catch {
+    } catch (err) {
+      console.error('loadBooks error:', err);
       setBooks([]);
+      setLoadError(err.message || 'Could not reach the catalogue.');
     }
     setLoading(false);
   }
@@ -1835,7 +1848,7 @@ function CatalogueFlow({ memberToken, memberProfile, onNeedLogin, initialScreen 
       </div>
 
       {screen === 'browse' && (
-        <BrowseView books={books} loading={loading} memberToken={memberToken} onNeedLogin={onNeedLogin} onEdit={startEdit} />
+        <BrowseView books={books} loading={loading} loadError={loadError} memberToken={memberToken} onNeedLogin={onNeedLogin} onEdit={startEdit} />
       )}
 
       {screen === 'foryou' && (
@@ -1887,6 +1900,48 @@ export default function App() {
   const [memberToken, setMemberToken] = useState(null);
   const [memberProfile, setMemberProfile] = useState(null);
   const [catalogueTab, setCatalogueTab] = useState('browse');
+  const [restoringSession, setRestoringSession] = useState(true);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('memberToken');
+    if (!saved) {
+      setRestoringSession(false);
+      return;
+    }
+    callFunction('session-check', { token: saved })
+      .then(result => {
+        if (result.valid) {
+          setMemberToken(saved);
+          setMemberProfile({ ...result, token: saved });
+        } else {
+          localStorage.removeItem('memberToken');
+        }
+      })
+      .catch(() => {
+        // if the check itself fails, don't block the app on it — just proceed logged out
+      })
+      .finally(() => setRestoringSession(false));
+  }, []);
+
+  function handleLoginSuccess(token, profile) {
+    localStorage.setItem('memberToken', token);
+    setMemberToken(token);
+    setMemberProfile(profile);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('memberToken');
+    setMemberToken(null);
+    setMemberProfile(null);
+  }
+
+  if (restoringSession) {
+    return (
+      <div className="w-full max-w-xl mx-auto p-6 bg-stone-50 min-h-screen flex items-center justify-center">
+        <p className="text-sm text-stone-400">Loading…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-xl mx-auto p-6 bg-stone-50 min-h-screen">
@@ -1924,14 +1979,9 @@ export default function App() {
             setCatalogueTab(tab || 'browse');
             setScreen('catalogue');
           }}
-          onLoginSuccess={(token, profile) => {
-            setMemberToken(token);
-            setMemberProfile(profile);
-          }}
-          onLogout={() => {
-            setMemberToken(null);
-            setMemberProfile(null);
-          }}
+          onLoginSuccess={handleLoginSuccess}
+          onLogout={handleLogout}
+          restoredProfile={memberProfile}
         />
       )}
       {screen === 'catalogue' && (
