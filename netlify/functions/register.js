@@ -53,7 +53,8 @@ exports.handler = async event => {
     if (insertError) throw insertError;
 
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
-  } catch {
+  } catch (err) {
+    console.error('register error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't save that just now — please try again." }) };
   }
 };

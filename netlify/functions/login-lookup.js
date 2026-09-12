@@ -23,7 +23,8 @@ exports.handler = async event => {
       statusCode: 200,
       body: JSON.stringify({ found: true, id: data.id, firstName: data.first_name, securityQuestion: data.security_question }),
     };
-  } catch {
+  } catch (err) {
+    console.error('login-lookup error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't look that up just now — please try again." }) };
   }
 };

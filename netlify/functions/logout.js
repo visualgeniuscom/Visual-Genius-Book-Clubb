@@ -10,7 +10,8 @@ exports.handler = async event => {
       await supabase.from('sessions').delete().eq('token', token);
     }
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
-  } catch {
+  } catch (err) {
+    console.error('logout error:', err);
     // Logging out should never visibly fail from the user's perspective.
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
   }

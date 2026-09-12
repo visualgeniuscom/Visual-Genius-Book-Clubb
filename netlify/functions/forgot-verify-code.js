@@ -24,7 +24,8 @@ exports.handler = async event => {
     }
 
     return { statusCode: 200, body: JSON.stringify({ verified: true, id: data.id, username: data.username }) };
-  } catch {
+  } catch (err) {
+    console.error('forgot-verify-code error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't verify that just now — please try again." }) };
   }
 };

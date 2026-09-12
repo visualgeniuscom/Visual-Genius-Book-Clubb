@@ -46,7 +46,8 @@ exports.handler = async event => {
         skip: data.skip_list,
       }),
     };
-  } catch {
+  } catch (err) {
+    console.error('login-verify error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't verify that just now — please try again." }) };
   }
 };

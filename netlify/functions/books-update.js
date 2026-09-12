@@ -17,7 +17,8 @@ exports.handler = async event => {
     if (error) throw error;
 
     return { statusCode: 200, body: JSON.stringify({ success: true }) };
-  } catch {
+  } catch (err) {
+    console.error('books-update error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't save those changes just now — please try again." }) };
   }
 };

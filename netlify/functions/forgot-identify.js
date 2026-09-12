@@ -55,7 +55,8 @@ exports.handler = async event => {
       statusCode: 200,
       body: JSON.stringify({ found: true, emailed: false, maskedEmail: maskEmail(data.guardian_email), devCode: code }),
     };
-  } catch {
+  } catch (err) {
+    console.error('forgot-identify error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't process that just now — please try again." }) };
   }
 };

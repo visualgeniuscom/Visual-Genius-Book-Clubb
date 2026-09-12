@@ -5,7 +5,8 @@ exports.handler = async event => {
     const { password } = JSON.parse(event.body);
     const valid = !!process.env.ADMIN_PASSWORD && password === process.env.ADMIN_PASSWORD;
     return { statusCode: 200, body: JSON.stringify({ valid }) };
-  } catch {
+  } catch (err) {
+    console.error('admin-check error:', err);
     return { statusCode: 500, body: JSON.stringify({ valid: false }) };
   }
 };

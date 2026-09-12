@@ -18,7 +18,8 @@ exports.handler = async event => {
     if (error) throw error;
 
     return { statusCode: 200, body: JSON.stringify({ path: data.path, token: data.token }) };
-  } catch {
+  } catch (err) {
+    console.error('storage-sign-upload error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't prepare that upload just now." }) };
   }
 };

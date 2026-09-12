@@ -33,7 +33,8 @@ exports.handler = async event => {
     if (signError) throw signError;
 
     return { statusCode: 200, body: JSON.stringify({ url: signed.signedUrl }) };
-  } catch {
+  } catch (err) {
+    console.error('get-file-url error:', err);
     return { statusCode: 500, body: JSON.stringify({ error: "Couldn't open that file just now — please try again." }) };
   }
 };
