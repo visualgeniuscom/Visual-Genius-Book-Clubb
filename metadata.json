@@ -1,0 +1,8 @@
+{
+  "name": "Visual Genius Book Club",
+  "description": "A curated book club catalogue and recommendation platform tailored for young readers across different age bands and reading personalities.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
